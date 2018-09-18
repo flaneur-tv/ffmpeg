@@ -80,7 +80,7 @@ RUN \
         cd ${DIR} && \
         curl -sL https://kent.dl.sourceforge.net/project/opencore-amr/opencore-amr/opencore-amr-${OPENCOREAMR_VERSION}.tar.gz | \
         tar -zx --strip-components=1 && \
-        ./configure --prefix="${PREFIX}" --enable-static  && \
+        ./configure --prefix="${PREFIX}" --enable-static --disable-shared && \
         make && \
         make install && \
         rm -rf ${DIR}
@@ -91,7 +91,7 @@ RUN \
         cd ${DIR} && \
         curl -sL https://download.videolan.org/pub/videolan/x264/snapshots/x264-snapshot-${X264_VERSION}.tar.bz2 | \
         tar -jx --strip-components=1 && \
-        ./configure --prefix="${PREFIX}" --enable-static --enable-pic --disable-cli && \
+        ./configure --prefix="${PREFIX}" --enable-static --disable-shared --enable-pic --disable-cli && \
         make && \
         make install && \
         rm -rf ${DIR}
@@ -116,7 +116,7 @@ RUN \
         curl -sLO http://downloads.xiph.org/releases/ogg/libogg-${OGG_VERSION}.tar.gz && \
         echo ${OGG_SHA256SUM} | sha256sum --check && \
         tar -zx --strip-components=1 -f libogg-${OGG_VERSION}.tar.gz && \
-        ./configure --prefix="${PREFIX}" --enable-static  && \
+        ./configure --prefix="${PREFIX}" --enable-static --disable-shared  && \
         make && \
         make install && \
         rm -rf ${DIR}
@@ -129,7 +129,7 @@ RUN \
         echo ${OPUS_SHA256SUM} | sha256sum --check && \
         tar -zx --strip-components=1 -f opus-${OPUS_VERSION}.tar.gz && \
         autoreconf -fiv && \
-        ./configure --prefix="${PREFIX}" --enable-static && \
+        ./configure --prefix="${PREFIX}" --enable-static --disable-shared && \
         make && \
         make install && \
         rm -rf ${DIR}
@@ -141,7 +141,7 @@ RUN \
         curl -sLO http://downloads.xiph.org/releases/vorbis/libvorbis-${VORBIS_VERSION}.tar.gz && \
         echo ${VORBIS_SHA256SUM} | sha256sum --check && \
         tar -zx --strip-components=1 -f libvorbis-${VORBIS_VERSION}.tar.gz && \
-        ./configure --prefix="${PREFIX}" --with-ogg="${PREFIX}" --enable-static && \
+        ./configure --prefix="${PREFIX}" --with-ogg="${PREFIX}" --enable-static --disable-shared && \
         make && \
         make install && \
         rm -rf ${DIR}
@@ -153,7 +153,7 @@ RUN \
         curl -sLO http://downloads.xiph.org/releases/theora/libtheora-${THEORA_VERSION}.tar.gz && \
         echo ${THEORA_SHA256SUM} | sha256sum --check && \
         tar -zx --strip-components=1 -f libtheora-${THEORA_VERSION}.tar.gz && \
-        ./configure --prefix="${PREFIX}" --with-ogg="${PREFIX}" --enable-static && \
+        ./configure --prefix="${PREFIX}" --with-ogg="${PREFIX}" --enable-static --disable-shared && \
         make && \
         make install && \
         rm -rf ${DIR}
@@ -165,7 +165,7 @@ RUN \
         curl -sL https://codeload.github.com/webmproject/libvpx/tar.gz/v${VPX_VERSION} | \
         tar -zx --strip-components=1 && \
         ./configure --prefix="${PREFIX}" --enable-vp8 --enable-vp9 --enable-vp9-highbitdepth --enable-pic --enable-static \
-        --disable-debug --disable-examples --disable-docs --disable-install-bins  && \
+        --disable-shared --disable-debug --disable-examples --disable-docs --disable-install-bins  && \
         make && \
         make install && \
         rm -rf ${DIR}
@@ -176,7 +176,7 @@ RUN \
         cd ${DIR} && \
         curl -sL https://kent.dl.sourceforge.net/project/lame/lame/$(echo ${LAME_VERSION} | sed -e 's/[^0-9]*\([0-9]*\)[.]\([0-9]*\)[.]\([0-9]*\)\([0-9A-Za-z-]*\)/\1.\2/')/lame-${LAME_VERSION}.tar.gz | \
         tar -zx --strip-components=1 && \
-        ./configure --prefix="${PREFIX}" --bindir="${PREFIX}/bin" --enable-shared --enable-nasm --enable-pic --disable-frontend && \
+        ./configure --prefix="${PREFIX}" --bindir="${PREFIX}/bin" --enable-shared --disable-shared --enable-nasm --enable-pic --disable-frontend && \
         make && \
         make install && \
         rm -rf ${DIR}
@@ -189,7 +189,7 @@ RUN \
         echo ${XVID_SHA256SUM} | sha256sum --check && \
         tar -zx -f xvidcore-${XVID_VERSION}.tar.gz && \
         cd xvidcore/build/generic && \
-        ./configure --prefix="${PREFIX}" --bindir="${PREFIX}/bin" --datadir="${DIR}" --enable-static && \
+        ./configure --prefix="${PREFIX}" --bindir="${PREFIX}/bin" --datadir="${DIR}" --enable-static --disable-shared && \
         make && \
         make install && \
         rm -rf ${DIR}
@@ -201,7 +201,7 @@ RUN \
         curl -sL https://github.com/mstorsjo/fdk-aac/archive/v${FDKAAC_VERSION}.tar.gz | \
         tar -zx --strip-components=1 && \
         autoreconf -fiv && \
-        ./configure --prefix="${PREFIX}" --enable-static --datadir="${DIR}" && \
+        ./configure --prefix="${PREFIX}" --enable-static --disable-shared --datadir="${DIR}" && \
         make && \
         make install && \
         rm -rf ${DIR}
@@ -315,6 +315,7 @@ RUN  \
         --disable-debug \
         --disable-doc \
         --disable-ffplay \
+        --disable-shared \
         --enable-static \
         --enable-avresample \
         --enable-libopencore-amrnb \
@@ -340,7 +341,7 @@ RUN  \
         --enable-postproc \
         --enable-small \
         --enable-version3 \
-        --extra-cflags="-I${PREFIX}/include" \
+        --extra-cflags="-I${PREFIX}/include -static" \
         --extra-ldflags="-L${PREFIX}/lib" \
         --extra-libs=-ldl \
         --prefix="${PREFIX}" && \
