@@ -141,7 +141,7 @@ RUN \
         curl -sLO http://downloads.xiph.org/releases/vorbis/libvorbis-${VORBIS_VERSION}.tar.gz && \
         echo ${VORBIS_SHA256SUM} | sha256sum --check && \
         tar -zx --strip-components=1 -f libvorbis-${VORBIS_VERSION}.tar.gz && \
-        ./configure --prefix="${PREFIX}" --with-ogg="${PREFIX}" --enable-static --disable-shared && \
+        ./configure --prefix="${PREFIX}" --with-ogg="${PREFIX}" LDFLAGS="-L${PREFIX}/lib" CPPFLAGS="-I${PREFIX}/include" --disable-shared && \
         make && \
         make install && \
         rm -rf ${DIR}
@@ -212,7 +212,7 @@ RUN \
         cd ${DIR} && \
         curl -sL https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz | \
         tar -zx --strip-components=1 && \
-        cmake -DBUILD_THIRDPARTY:BOOL=ON -DCMAKE_INSTALL_PREFIX="${PREFIX}" . && \
+        cmake -DBUILD_THIRDPARTY:BOOL=ON -DCMAKE_INSTALL_PREFIX="${PREFIX}" -DBUILD_SHARED_LIBS:bool=off -DBUILD_STATIC_LIBS:bool=on . && \
         make && \
         make install && \
         rm -rf ${DIR}
@@ -224,7 +224,7 @@ RUN  \
         curl -sLO http://download.savannah.gnu.org/releases/freetype/freetype-${FREETYPE_VERSION}.tar.gz && \
         echo ${FREETYPE_SHA256SUM} | sha256sum --check && \
         tar -zx --strip-components=1 -f freetype-${FREETYPE_VERSION}.tar.gz && \
-        ./configure --prefix="${PREFIX}" --disable-shared --enable-static && \
+        ./configure --prefix="${PREFIX}" && \
         make && \
         make install && \
         rm -rf ${DIR}
@@ -236,7 +236,7 @@ RUN  \
         curl -sLO https://github.com/georgmartius/vid.stab/archive/v${LIBVIDSTAB_VERSION}.tar.gz &&\
         echo ${LIBVIDSTAB_SHA256SUM} | sha256sum --check && \
         tar -zx --strip-components=1 -f v${LIBVIDSTAB_VERSION}.tar.gz && \
-        cmake -DCMAKE_INSTALL_PREFIX="${PREFIX}" . && \
+        cmake -DCMAKE_INSTALL_PREFIX="${PREFIX}" -DBUILD_SHARED_LIBS:bool=off -DBUILD_STATIC_LIBS:bool=on . && \
         make && \
         make install && \
         rm -rf ${DIR}
@@ -301,11 +301,11 @@ RUN \
         rm -rf CMakeCache.txt CMakeFiles ; \
         mkdir -p ./aom_build ; \
         cd ./aom_build ; \
-        cmake -DCMAKE_INSTALL_PREFIX="${PREFIX}" ..; \
+        cmake -DCMAKE_INSTALL_PREFIX="${PREFIX}" -DBUILD_SHARED_LIBS:bool=off -DBUILD_STATIC_LIBS:bool=on ..; \
         make ; \
         make install ; \
         rm -rf ${dir}
-
+    
 ## ffmpeg https://ffmpeg.org/
 RUN  \
         DIR=$(mktemp -d) && cd ${DIR} && \
@@ -337,14 +337,16 @@ RUN  \
         --enable-openssl \
         --enable-libfdk_aac \
         --enable-libkvazaar \
-        --enable-libaom --extra-libs=-lpthread \
+        --enable-libaom \
         --enable-postproc \
         --enable-small \
         --enable-version3 \
         --extra-cflags="-I${PREFIX}/include -static" \
-        --extra-ldflags="-L${PREFIX}/lib" \
+        --extra-ldflags="-L${PREFIX}/lib -static" \
         --extra-libs=-ldl \
-        --prefix="${PREFIX}" && \
+        --extra-libs=-lpthread \
+        --prefix="${PREFIX}" \
+        --pkg-config-flags="--static" && \
         make && \
         make install && \
         make distclean && \
