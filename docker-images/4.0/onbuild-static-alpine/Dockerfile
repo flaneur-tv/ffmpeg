@@ -18,7 +18,7 @@ ARG        LD_LIBRARY_PATH=/opt/ffmpeg/lib
 ARG        PREFIX=/opt/ffmpeg
 ARG        MAKEFLAGS="-j2"
 
-ENV         FFMPEG_VERSION=4.0.2     \
+ENV         FFMPEG_VERSION=snapshot   \
             FDKAAC_VERSION=0.1.5      \
             LAME_VERSION=3.99.5       \
             LIBASS_VERSION=0.13.7     \
@@ -291,7 +291,6 @@ RUN \
         make && \
         make install && \
         rm -rf ${DIR}
-
 RUN \
         dir=/tmp/aom ; \
         mkdir -p ${dir} ; \
@@ -301,7 +300,8 @@ RUN \
         rm -rf CMakeCache.txt CMakeFiles ; \
         mkdir -p ./aom_build ; \
         cd ./aom_build ; \
-        cmake -DCMAKE_INSTALL_PREFIX="${PREFIX}" -DBUILD_SHARED_LIBS:bool=off -DBUILD_STATIC_LIBS:bool=on ..; \
+        cmake -DCMAKE_INSTALL_PREFIX="${PREFIX}" -DENABLE_SHARED=off -DBUILD_SHARED_LIBS=0 \
+        -DENABLE_DOCS=0 -DCONFIG_INSTALL_DOCS=0 -DENABLE_TOOLS=off -DCONFIG_UNIT_TESTS=0 ..; \
         make ; \
         make install ; \
         rm -rf ${dir}
@@ -369,7 +369,7 @@ MAINTAINER  Julien Rottenberg <julien@rottenberg.info>
 CMD         ["--help"]
 ENTRYPOINT  ["ffmpeg"]
 
-COPY --from=build /usr/local /usr/local
+COPY --from=build /usr/local/ /usr/local/
 
 # Let's make sure the app built correctly
 # Convenient to verify on https://hub.docker.com/r/jrottenberg/ffmpeg/builds/ console output
