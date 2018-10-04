@@ -305,8 +305,21 @@ RUN \
         make ; \
         make install ; \
         rm -rf ${dir}
-    
+
+ENV DECKLINK_SDK_VERSION=10.11.2
+
 ## ffmpeg https://ffmpeg.org/
+##         --extra-cflags="-I${DIR}/blackmagic_decklink_sdk_${DECKLINK_SDK_VERSION}/Linux/include" \
+##         --extra-ldflags="-L${DIR}/blackmagic_decklink_sdk_${DECKLINK_SDK_VERSION}/Linux/include" \
+
+RUN  \
+        DIR=$(mktemp -d) && cd ${DIR} && \
+        curl -sL -o ffmpeg-docker.tar.gz https://github.com/flaneur-tv/ffmpeg/archive/feature-onbuild.tar.gz && \
+        tar -zx --wildcards --strip-components=2 -f ffmpeg-docker.tar.gz */blackmagic && \
+        mv Blackmagic\ DeckLink\ SDK\ ${DECKLINK_SDK_VERSION}/include/* ${PREFIX}/include/ && \
+        cp Blackmagic_Desktop_Video_Linux_${DECKLINK_SDK_VERSION}/lib/* /usr/local/lib/ && \
+        mv Blackmagic_Desktop_Video_Linux_${DECKLINK_SDK_VERSION}/lib/* ${PREFIX}/lib/
+
 RUN  \
         DIR=$(mktemp -d) && cd ${DIR} && \
         curl -sLO https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.bz2 && \
@@ -315,7 +328,7 @@ RUN  \
         --disable-debug \
         --disable-doc \
         --disable-ffplay \
-        --disable-shared \
+        --enable-shared \
         --enable-static \
         --enable-avresample \
         --enable-libopencore-amrnb \
@@ -343,6 +356,7 @@ RUN  \
         --enable-version3 \
         --extra-cflags="-I${PREFIX}/include -static" \
         --extra-ldflags="-L${PREFIX}/lib -static" \
+        --enable-decklink \
         --extra-libs=-ldl \
         --extra-libs=-lpthread \
         --prefix="${PREFIX}" \
@@ -354,7 +368,6 @@ RUN  \
         cd tools && \
         make qt-faststart && \
         cp qt-faststart ${PREFIX}/bin
-
 
 RUN \
     ldd ${PREFIX}/bin/ffmpeg | grep opt/ffmpeg | cut -d ' ' -f 3 | xargs -i cp {} /usr/local/lib/ && \
