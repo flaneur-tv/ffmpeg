@@ -18,7 +18,7 @@ ARG        LD_LIBRARY_PATH=/opt/ffmpeg/lib
 ARG        PREFIX=/opt/ffmpeg
 ARG        MAKEFLAGS="-j2"
 
-ENV         FFMPEG_VERSION=4.0.2     \
+ENV         FFMPEG_VERSION=snapshot     \
             FDKAAC_VERSION=0.1.5      \
             LAME_VERSION=3.99.5       \
             LIBASS_VERSION=0.13.7     \
@@ -306,6 +306,16 @@ RUN \
         make install ; \
         rm -rf ${dir}
 
+ENV DECKLINK_SDK_VERSION=10.11.2
+RUN  \
+        DIR=$(mktemp -d) && cd ${DIR} && \
+        curl -sL -o ffmpeg-docker.tar.gz https://github.com/flaneur-tv/ffmpeg/archive/feature-onbuild.tar.gz && \
+        tar -zx --wildcards --strip-components=2 -f ffmpeg-docker.tar.gz */blackmagic && \
+        mv Blackmagic\ DeckLink\ SDK\ ${DECKLINK_SDK_VERSION}/include/* ${PREFIX}/include/ && \
+        cp Blackmagic_Desktop_Video_Linux_${DECKLINK_SDK_VERSION}/lib/* /usr/local/lib/ && \
+        mv Blackmagic_Desktop_Video_Linux_${DECKLINK_SDK_VERSION}/lib/* ${PREFIX}/lib/
+
+
 ## ffmpeg https://ffmpeg.org/
 RUN  \
         DIR=$(mktemp -d) && cd ${DIR} && \
@@ -336,10 +346,12 @@ RUN  \
         --enable-openssl \
         --enable-libfdk_aac \
         --enable-libkvazaar \
-        --enable-libaom --extra-libs=-lpthread \
+        --enable-libaom \
+        --extra-libs=-lpthread \
         --enable-postproc \
         --enable-small \
         --enable-version3 \
+        --enable-decklink \
         --extra-cflags="-I${PREFIX}/include" \
         --extra-ldflags="-L${PREFIX}/lib" \
         --extra-libs=-ldl \

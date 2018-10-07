@@ -309,19 +309,24 @@ RUN \
         make install ; \
         rm -rf ${dir}
 
-ENV DECKLINK_SDK_VERSION=10.11.2
 
 ## ffmpeg https://ffmpeg.org/
 ##         --extra-cflags="-I${DIR}/blackmagic_decklink_sdk_${DECKLINK_SDK_VERSION}/Linux/include" \
 ##         --extra-ldflags="-L${DIR}/blackmagic_decklink_sdk_${DECKLINK_SDK_VERSION}/Linux/include" \
 
+# Decklink SDK and Drivers
+ENV DECKLINK_SDK_VERSION=10.11.2
 RUN  \
-        DIR=$(mktemp -d) && cd ${DIR} && \
+        dir=/tmp/blackmagic && \
+        mkdir -p ${dir} && \
+        cd ${dir} && \
         curl -sL -o ffmpeg-docker.tar.gz https://github.com/flaneur-tv/ffmpeg/archive/feature-onbuild.tar.gz && \
         tar -zx --wildcards --strip-components=2 -f ffmpeg-docker.tar.gz */blackmagic && \
-        mv Blackmagic\ DeckLink\ SDK\ ${DECKLINK_SDK_VERSION}/include/* ${PREFIX}/include/ && \
+        mkdir -p ${PREFIX}/decklink/lib/ && \        
         cp Blackmagic_Desktop_Video_Linux_${DECKLINK_SDK_VERSION}/lib/* /usr/local/lib/ && \
-        mv Blackmagic_Desktop_Video_Linux_${DECKLINK_SDK_VERSION}/lib/* ${PREFIX}/lib/
+        mv Blackmagic_Desktop_Video_Linux_${DECKLINK_SDK_VERSION}/lib/* ${PREFIX}/decklink/lib/ && \
+        mkdir -p ${PREFIX}/decklink/include/ && \
+        mv Blackmagic\ DeckLink\ SDK\ ${DECKLINK_SDK_VERSION}/include/* ${PREFIX}/decklink/include/
 
 RUN  \
         DIR=$(mktemp -d) && cd ${DIR} && \
@@ -347,10 +352,11 @@ RUN  \
         --enable-libvorbis \
         --enable-libvpx \
         --enable-libx265 \
-        #--enable-libxvid \
+        --enable-libxvid \
         --enable-libx264 \
         --enable-nonfree \
         --enable-openssl \
+#        --enable-gnutls \
         --enable-libfdk_aac \
         --enable-libkvazaar \
         --enable-libaom \
@@ -358,8 +364,8 @@ RUN  \
         --enable-postproc \
         --enable-small \
         --enable-version3 \
-        --extra-cflags="-I${PREFIX}/include -static" \
-        --extra-ldflags="-L${PREFIX}/lib -static" \
+        --extra-cflags="-I${PREFIX}/include -static -I${PREFIX}/decklink/include" \
+        --extra-ldflags="-L${PREFIX}/lib -static -L${PREFIX}/decklink/lib/" \
         --enable-decklink \
         --extra-libs=-ldl \
         --prefix="${PREFIX}" \
@@ -386,6 +392,13 @@ ENTRYPOINT  ["ffmpeg"]
 ENV         LD_LIBRARY_PATH=/usr/local/lib
 
 COPY --from=build /usr/local /usr/local/
+RUN   deps="libssl1.0.0 \
+            libgomp1 \
+            libexpat1 \
+            libc++1 \
+            libc++abi1" && \
+            apt-get -yqq update && \
+            apt-get install -yq --no-install-recommends ${deps}
 
 # Let's make sure the app built correctly
 # Convenient to verify on https://hub.docker.com/r/jrottenberg/ffmpeg/builds/ console output
